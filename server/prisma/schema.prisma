@@ -1,0 +1,128 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum MuscleGroup {
+  CHEST
+  BACK
+  LEGS
+  SHOULDERS
+  ARMS
+  CORE
+}
+
+enum Difficulty {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum MealType {
+  BREAKFAST
+  LUNCH
+  DINNER
+  SNACKS
+}
+
+enum FitnessGoal {
+  FAT_LOSS
+  MAINTENANCE
+  MUSCLE_GAIN
+}
+
+model User {
+  id                 Int              @id @default(autoincrement())
+  username           String           @unique
+  displayName        String?
+  passwordHash       String
+  fitnessGoal        FitnessGoal      @default(MAINTENANCE)
+  dailyCalorieTarget Int              @default(2200)
+  proteinTarget      Int              @default(150)
+  carbsTarget        Int              @default(220)
+  fatsTarget         Int              @default(70)
+  currentWeight      Float?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @default(now()) @updatedAt
+  mealEntries        MealEntry[]
+  workoutSessions    WorkoutSession[]
+}
+
+model Workout {
+  id              Int                     @id @default(autoincrement())
+  name            String
+  targetMuscle    MuscleGroup
+  equipment       String
+  difficulty      Difficulty
+  instructions    String
+  videoLink       String?
+  createdAt       DateTime                @default(now())
+  sessionExercises WorkoutSessionExercise[]
+}
+
+model MealEntry {
+  id        Int       @id @default(autoincrement())
+  userId    Int
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date      String
+  mealType  MealType
+  createdAt DateTime  @default(now())
+  items     MealItem[]
+
+  @@index([userId, date])
+}
+
+model MealItem {
+  id          Int       @id @default(autoincrement())
+  mealEntryId Int
+  mealEntry   MealEntry @relation(fields: [mealEntryId], references: [id], onDelete: Cascade)
+  name        String
+  quantity    String
+  calories    Float
+  protein     Float?
+  carbs       Float?
+  fats        Float?
+}
+
+model WorkoutSession {
+  id              Int                     @id @default(autoincrement())
+  userId          Int
+  user            User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title           String
+  date            String
+  notes           String?
+  durationMinutes Int?
+  createdAt       DateTime                @default(now())
+  updatedAt       DateTime                @default(now()) @updatedAt
+  exercises       WorkoutSessionExercise[]
+
+  @@index([userId, date])
+}
+
+model WorkoutSessionExercise {
+  id        Int            @id @default(autoincrement())
+  sessionId Int
+  workoutId Int
+  notes     String?
+  sortOrder Int
+  session   WorkoutSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  workout   Workout        @relation(fields: [workoutId], references: [id], onDelete: Restrict)
+  sets      WorkoutSet[]
+
+  @@index([sessionId, sortOrder])
+}
+
+model WorkoutSet {
+  id                Int                    @id @default(autoincrement())
+  sessionExerciseId Int
+  setNumber         Int
+  reps              Int
+  weight            Float?
+  sessionExercise   WorkoutSessionExercise @relation(fields: [sessionExerciseId], references: [id], onDelete: Cascade)
+
+  @@index([sessionExerciseId, setNumber])
+}

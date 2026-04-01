@@ -1,0 +1,8 @@
+node_modules
+dist
+*.log
+*.tsbuildinfo
+.env
+server/.env
+server/prisma/db.sqlite
+server/prisma/db.sqlite-journal
